@@ -72,9 +72,9 @@
         for doc in items
         for description = (pinot:xml-node-value doc 'description)
         for link = (pinot:xml-node-value doc 'link)
+        for title = (pinot:xml-node-value doc 'title)
         collect (cons (concat
-                       (propertize (file-name-nondirectory link)
-                                   'face 'pinot:search-file-name)
+                       (propertize title 'face 'pinot:search-file-name)
                        ": " description)
                       (if (string-prefix-p "file://" link)
                           (substring link 7)
