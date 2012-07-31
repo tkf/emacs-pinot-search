@@ -39,7 +39,7 @@
   :group 'applications
   :prefix "pinot:")
 
-(defface pinot:search-file-name
+(defface pinot:search-item-title
   '((t (:inherit font-lock-doc-face)))
   "Face for matched file."
   :group 'pinot)
@@ -74,7 +74,7 @@
         for link = (pinot:xml-node-value doc 'link)
         for title = (pinot:xml-node-value doc 'title)
         collect (cons (concat
-                       (propertize title 'face 'pinot:search-file-name)
+                       (propertize title 'face 'pinot:search-item-title)
                        ": " description)
                       (if (string-prefix-p "file://" link)
                           (substring link 7)
