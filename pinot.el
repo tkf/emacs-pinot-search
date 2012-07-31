@@ -96,6 +96,7 @@
 
 ;; Anything
 
+;;;###autoload
 (defun anything-pinot-search ()
   (interactive)
   (require 'anything-config nil t) ; to load `anything-c-source-find-files'.
@@ -107,6 +108,7 @@
 
 ;; Helm
 
+;;;###autoload
 (defun helm-pinot-search ()
   (interactive)
   (require 'helm-files nil t)     ; to load `helm-c-source-find-files'
