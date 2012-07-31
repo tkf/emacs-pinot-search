@@ -80,11 +80,15 @@
                           (substring link 7)
                         link))))
 
+(defun pinot:return-t (candidate) t)
+
 (defun pinot:search-make-source (query-sym action)
   `((name . "Pinot search")
     (candidates
      . (lambda () (pinot:search-get-candidates ,query-sym)))
     (requires-pattern . 1)
+    ;; Pattern match is not required since pinot already did the job:
+    (match . (pinot:return-t))
     ;; Needed to redo search when the pattern in minibuffer is changed:
     (volatile)
     ;; This does not work...  That's why I'm using `action':
