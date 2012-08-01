@@ -134,9 +134,13 @@ def pinot_search(args):
 
 
 def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-    pinot_search(args)
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'pinot_args', nargs='+',
+        help='Arguments passed to pinot-search.')
+    ns = parser.parse_args(args)
+    pinot_search(ns.pinot_args)
 
 
 if __name__ == '__main__':
