@@ -44,10 +44,22 @@
   "Face for matched file."
   :group 'pinot)
 
-(defvar pinot:search-executable "pinot-search")
+(defvar pinot:source-directory
+  (or (and load-file-name (file-name-directory load-file-name))
+      default-directory)
+  "Directory where pinot.el and pinot-search-wrapper.py locate.")
+
+(defvar pinot:search-wrapper
+  (and (executable-find "python")
+       (concat pinot:source-directory "pinot-search-wrapper.py"))
+  "Path to pinot-search-wrapper.py.")
+
+(defvar pinot:search-executable
+  (or pinot:search-wrapper "pinot-search"))
 (defvar pinot:search-engine-type "xapian")
 (defvar pinot:search-engine-option (expand-file-name "~/.pinot/daemon"))
-(defvar pinot:search-args '("--toxml" "-"))
+(defvar pinot:search-args
+  (unless pinot:search-wrapper '("--toxml" "-")))
 
 (defun* pinot:search-command (query &key (buffer t) (stderr nil))
   (apply #'call-process
