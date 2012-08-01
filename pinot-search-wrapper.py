@@ -3,7 +3,7 @@
 """
 Wrap `pinot-search --toxml -` to get right document title from text markups.
 
-Supported markups: reStructuredText, Markdown.
+Supported markups: reStructuredText, Markdown, org-mode.
 """
 
 # Copyright (C) 2012 Takafumi Arakaki
@@ -70,6 +70,7 @@ iparse_rst_underline_headings = gene_iparse_underline_headings(
 # See also: docutils.parsers.rst.states.Body.pats['nonalphanum7bit']
 
 iparse_sharps_headings = gene_iparse_prefix_headings('#{1,6}')
+iparse_asterisk_headings = gene_iparse_prefix_headings(r'\*+')
 
 
 def first(iterative):
@@ -97,9 +98,16 @@ def get_title_md(path):
         [iparse_md_underline_headings, iparse_sharps_headings])
 
 
+def get_title_org(path):
+    return get_first_heading(
+        open(path).xreadlines(),
+        [iparse_asterisk_headings])
+
+
 exts_func = [
     (('rst', 'rest'), get_title_rst),
     (('md', 'markdown'), get_title_md),
+    (('org',), get_title_org),
 ]
 
 dispatcher = dict((ext, func) for (exts, func) in exts_func for ext in exts)
