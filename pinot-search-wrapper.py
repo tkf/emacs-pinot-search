@@ -33,6 +33,7 @@ import re
 from itertools import imap, ifilter, izip, tee
 from xml.dom import minidom
 import subprocess
+import codecs
 
 
 def gene_iparse_underline_headings(symbols):
@@ -137,16 +138,17 @@ def fix_title(dom):
             path = path[len('file://'):]
             real_title = get_title(path)
             if real_title:
-                title.firstChild.nodeValue = real_title
+                title.firstChild.nodeValue = unicode(
+                    real_title, encoding='UTF-8')
 
 
 def pinot_search(args):
     proc = subprocess.Popen(
         ['pinot-search', '--toxml', '-'] + args,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    dom = minidom.parse(proc.stdout)
+    dom = minidom.parse(codecs.getreader('UTF-8')(proc.stdout))
     fix_title(dom)
-    dom.writexml(sys.stdout)
+    dom.writexml(codecs.getwriter('UTF-8')(sys.stdout))
 
 
 def main(args=None):
