@@ -40,7 +40,7 @@
   :prefix "pinot:")
 
 (defface pinot:search-item-title
-  '((t (:inherit font-lock-doc-face)))
+  '((t :height 1.1 :inherit (variable-pitch bold)))
   "Face for matched file."
   :group 'pinot)
 
