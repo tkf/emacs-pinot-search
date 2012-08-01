@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Wrap `pinot-search --toxml -` to get right document title from text markups.
+
+Supported markups: reStructuredText, Markdown.
+"""
+
 # Copyright (C) 2012 Takafumi Arakaki
 
 # Author: Takafumi Arakaki <aka.tkf at gmail.com>
@@ -92,6 +98,9 @@ dispatcher = dict((ext, func) for (exts, func) in exts_func for ext in exts)
 
 
 def get_title(path):
+    """
+    Get title of the document at `path` or None if cannot be retrieved.
+    """
     ext = os.path.splitext(path)[1].lower()[1:]
     func = dispatcher.get(ext)
     if func:
@@ -99,6 +108,9 @@ def get_title(path):
 
 
 def fix_title(dom):
+    """
+    Fix document titles in `dom` IN-PLACE.
+    """
     for item in dom.getElementsByTagName('item'):
         title = first(item.getElementsByTagName('title'))
         link = first(item.getElementsByTagName('link'))
