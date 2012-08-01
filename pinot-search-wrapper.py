@@ -35,33 +35,29 @@ from xml.dom import minidom
 import subprocess
 
 
-def get_title_rst(path):
-    try:
-        from docutils.core import  publish_doctree
-        from docutils import io
-        from docutils import nodes
-    except ImportError:
-        return
+def gene_iparse_underline_headings(symbols):
+    underline_re = re.compile(r'({0})\1* *$'.format(symbols))
 
-    doc = publish_doctree(None, path, io.FileInput)
-    for nd in doc.traverse(nodes.title):
-        return nd.astext().encode('utf-8')
+    def iparse_underline_headings(lines):
+        lines = iter(lines)
+        previous = lines.next()
+        yield
+        for line in lines:
+            if underline_re.match(line.rstrip()):
+                yield previous
+            else:
+                yield
+            previous = line
+
+    return iparse_underline_headings
+
+iparse_md_underline_headings = gene_iparse_underline_headings('=-')
+iparse_rst_underline_headings = gene_iparse_underline_headings(
+    '[!-/:-@[-`{-~]')
+# See also: docutils.parsers.rst.states.Body.pats['nonalphanum7bit']
 
 
-HEADING_UNDERLINE_RE = re.compile("^(=+|-+)$")
 HEADING_SHARPS_RE = re.compile("^#{1,6} .+$")
-
-
-def iparse_underline_headings(lines):
-    lines = iter(lines)
-    previous = lines.next()
-    yield
-    for line in lines:
-        if HEADING_UNDERLINE_RE.match(line.rstrip()):
-            yield previous
-        else:
-            yield
-        previous = line
 
 
 def iparse_sharps_headings(lines):
@@ -77,16 +73,23 @@ def first(iterative):
         return item
 
 
-def get_first_heading(lines):
+def get_first_heading(lines, parsers):
     lines = imap(str.rstrip, lines)
-    parsers = [iparse_underline_headings, iparse_sharps_headings]
     iteratives = map(lambda p, ls: p(ls), parsers, tee(lines, len(parsers)))
     candidates = first(ifilter(any, izip(*iteratives)))
     return first(ifilter(None, candidates))  # get non-None candidate
 
 
+def get_title_rst(path):
+    return get_first_heading(
+        open(path).xreadlines(),
+        [iparse_rst_underline_headings])
+
+
 def get_title_md(path):
-    return get_first_heading(open(path).xreadlines())
+    return get_first_heading(
+        open(path).xreadlines(),
+        [iparse_md_underline_headings, iparse_sharps_headings])
 
 
 exts_func = [
