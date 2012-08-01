@@ -51,21 +51,25 @@ def gene_iparse_underline_headings(symbols):
 
     return iparse_underline_headings
 
-iparse_md_underline_headings = gene_iparse_underline_headings('=-')
+
+def gene_iparse_prefix_headings(regexp):
+    prefix_re = re.compile(r'^{0} .+'.format(regexp))
+
+    def iparse_prefix_headings(lines):
+        for line in lines:
+            if prefix_re.match(line):
+                yield line.strip("#").strip()
+            else:
+                yield
+
+    return iparse_prefix_headings
+
+iparse_md_underline_headings = gene_iparse_underline_headings(r'[=\-]')
 iparse_rst_underline_headings = gene_iparse_underline_headings(
     '[!-/:-@[-`{-~]')
 # See also: docutils.parsers.rst.states.Body.pats['nonalphanum7bit']
 
-
-HEADING_SHARPS_RE = re.compile("^#{1,6} .+$")
-
-
-def iparse_sharps_headings(lines):
-    for line in lines:
-        if HEADING_SHARPS_RE.match(line):
-            yield line.strip("#").strip()
-        else:
-            yield
+iparse_sharps_headings = gene_iparse_prefix_headings('#{1,6}')
 
 
 def first(iterative):
@@ -77,7 +81,8 @@ def get_first_heading(lines, parsers):
     lines = imap(str.rstrip, lines)
     iteratives = map(lambda p, ls: p(ls), parsers, tee(lines, len(parsers)))
     candidates = first(ifilter(any, izip(*iteratives)))
-    return first(ifilter(None, candidates))  # get non-None candidate
+    if candidates:
+        return first(ifilter(None, candidates))  # get non-None candidate
 
 
 def get_title_rst(path):
