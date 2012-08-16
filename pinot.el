@@ -54,6 +54,11 @@
       default-directory)
   "Directory where pinot.el and pinot-search-wrapper.py locate.")
 
+(defvar pinot:stderr-file nil
+  "File to save STDERR output from pinot-search command.
+If `nil', STDERR will be discarded.  When it is specified, this
+file pops up opened when pinot-search failed.")
+
 (defvar pinot:search-wrapper
   (and (executable-find "python")
        (concat pinot:source-directory "pinot-search-wrapper.py"))
@@ -66,13 +71,25 @@
 (defvar pinot:search-args
   (unless pinot:search-wrapper '("--toxml" "-")))
 
-(defun* pinot:search-command (query &key (buffer t) (stderr nil))
-  (apply #'call-process
-         pinot:search-executable nil (list buffer stderr) nil
-         (append pinot:search-args
-                 (list pinot:search-engine-type
-                       pinot:search-engine-option
-                       query))))
+(defun* pinot:search-command (query &key (buffer t))
+  "Insert search result of QUERY in BUFFER (default: current buffer)."
+  (let* ((stderr pinot:stderr-file)
+         (args (append pinot:search-args
+                       (list pinot:search-engine-type
+                             pinot:search-engine-option
+                             query)))
+         (exit-status
+          (apply #'call-process
+                 pinot:search-executable nil (list buffer stderr) nil args)))
+    ;; Treat error case:
+    (unless (equal exit-status 0)
+      (let ((cmd (apply #'concat pinot:search-executable " " args)))
+        (when stderr
+          (with-current-buffer (get-buffer-create "*pinot:stderr*")
+            (erase-buffer)
+            (insert-file-contents stderr)
+            (pop-to-buffer (current-buffer))))
+        (error "%s failed with code %s" cmd exit-status)))))
 
 (defun pinot:search-get-xml (query)
   (with-temp-buffer
