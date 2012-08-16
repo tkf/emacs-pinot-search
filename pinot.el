@@ -64,6 +64,9 @@ file pops up opened when pinot-search failed.")
        (concat pinot:source-directory "pinot-search-wrapper.py"))
   "Path to pinot-search-wrapper.py.")
 
+(defvar pinot:normalize-path 'identity
+  "A function to convert path.  Useful when you have symlinks.")
+
 (defvar pinot:search-executable
   (or pinot:search-wrapper "pinot-search"))
 (defvar pinot:search-engine-type "xapian")
@@ -102,7 +105,7 @@ file pops up opened when pinot-search failed.")
 
 (defun pinot:link-to-path (link)
   (if (string-prefix-p "file://" link)
-      (substring link 7)
+      (funcall pinot:normalize-path (substring link 7))
     link))
 
 (defun pinot:make-display (title description link)
