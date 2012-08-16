@@ -121,9 +121,9 @@ file pops up opened when pinot-search failed.")
         for description = (pinot:xml-node-value doc 'description)
         for link = (pinot:xml-node-value doc 'link)
         for title = (pinot:xml-node-value doc 'title)
-        for display = (pinot:make-display title description link)
-        for real = (pinot:link-to-path link)
-        collect (cons display real)))
+        for path = (pinot:link-to-path link)
+        for display = (pinot:make-display title description path)
+        collect (cons display path)))
 
 (defun pinot:return-t (candidate) t)
 
