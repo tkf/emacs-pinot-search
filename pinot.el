@@ -41,7 +41,12 @@
 
 (defface pinot:search-item-title
   '((t :height 1.1 :inherit (variable-pitch bold)))
-  "Face for matched file."
+  "Face for matched document title."
+  :group 'pinot)
+
+(defface pinot:search-item-link
+  '((t :inherit font-lock-comment-face))
+  "Face for matched document link (path)."
   :group 'pinot)
 
 (defvar pinot:source-directory
@@ -78,6 +83,17 @@
 (defun pinot:xml-node-value (node name)
   (first (xml-node-children (first (xml-get-children node name)))))
 
+(defun pinot:link-to-path (link)
+  (if (string-prefix-p "file://" link)
+      (substring link 7)
+    link))
+
+(defun pinot:make-display (title description link)
+  (concat
+   (propertize title 'face 'pinot:search-item-title)
+   " [" (propertize link 'face 'pinot:search-item-link) "] "
+   ": " description))
+
 (defun pinot:search-get-candidates (query)
   (loop with root = (pinot:search-get-xml query)
         with items = (xml-get-children (first (xml-node-children root)) 'item)
@@ -85,12 +101,9 @@
         for description = (pinot:xml-node-value doc 'description)
         for link = (pinot:xml-node-value doc 'link)
         for title = (pinot:xml-node-value doc 'title)
-        collect (cons (concat
-                       (propertize title 'face 'pinot:search-item-title)
-                       ": " description)
-                      (if (string-prefix-p "file://" link)
-                          (substring link 7)
-                        link))))
+        for display = (pinot:make-display title description link)
+        for real = (pinot:link-to-path link)
+        collect (cons display real)))
 
 (defun pinot:return-t (candidate) t)
 
