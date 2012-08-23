@@ -131,7 +131,7 @@ file pops up opened when pinot-search failed.")
   `((name . "Pinot search")
     (candidates
      . (lambda () (pinot:search-get-candidates ,query-sym)))
-    (requires-pattern . 1)
+    (requires-pattern . 2)     ; it seems xapian fails with one letter
     ;; Pattern match is not required since pinot already did the job:
     (match . (pinot:return-t))
     ;; Needed to redo search when the pattern in minibuffer is changed:
