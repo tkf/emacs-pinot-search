@@ -142,23 +142,76 @@ def fix_title(dom):
                     real_title, encoding='UTF-8')
 
 
+def ouput_dom(dom):
+    fix_title(dom)
+    dom.writexml(codecs.getwriter('UTF-8')(sys.stdout))
+
+
 def pinot_search(args):
     proc = subprocess.Popen(
         ['pinot-search', '--toxml', '-'] + args,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     dom = minidom.parse(codecs.getreader('UTF-8')(proc.stdout))
-    fix_title(dom)
-    dom.writexml(codecs.getwriter('UTF-8')(sys.stdout))
+    ouput_dom(dom)
+
+
+def strip_tags(text):
+    """Strip tags in description.  Currently only for <b> tag."""
+    return text.replace('<b>', '').replace('</b>', '')
+
+
+def dbus_reply_to_xml(hitslist):
+    doc = minidom.Document()
+    rss = doc.createElement('rss')
+    rss.setAttribute('version', '2.0')
+    doc.appendChild(rss)
+    channel = doc.createElement('channel')
+    rss.appendChild(channel)
+
+    for hit in map(dict, hitslist):
+        item = doc.createElement('item')
+        channel.appendChild(item)
+
+        title = doc.createElement('title')
+        link = doc.createElement('link')
+        description = doc.createElement('description')
+        map(item.appendChild, [title, link, description])
+
+        for (node, key) in [(title, 'caption'),
+                            (link, 'url')]:
+            node.appendChild(doc.createTextNode(hit[key]))
+
+        description.appendChild(doc.createTextNode(strip_tags(hit['extract'])))
+
+    return doc
+
+
+def pinot_dbus_search(args):
+    import dbus
+    bus = dbus.SessionBus()
+    session = bus.get_object('de.berlios.Pinot', '/de/berlios/Pinot')
+    query_method = session.get_dbus_method('Query')
+    (engine_type, engine_name, search_text) = args
+    (estimated_hits, hitslist) = query_method(
+        engine_type, engine_name, search_text,
+        dbus.UInt32(0), dbus.UInt32(10))
+    dom = dbus_reply_to_xml(hitslist)
+    ouput_dom(dom)
 
 
 def main(args=None):
     from argparse import ArgumentParser
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
+        '--dbus', action='store_true', default=False)
+    parser.add_argument(
         'pinot_args', nargs='+',
         help='Arguments passed to pinot-search.')
     ns = parser.parse_args(args)
-    pinot_search(ns.pinot_args)
+    if ns.dbus:
+        pinot_dbus_search(ns.pinot_args)
+    else:
+        pinot_search(ns.pinot_args)
 
 
 if __name__ == '__main__':
