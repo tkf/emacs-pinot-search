@@ -71,8 +71,27 @@ file pops up opened when pinot-search failed.")
   (or pinot:search-wrapper "pinot-search"))
 (defvar pinot:search-engine-type "xapian")
 (defvar pinot:search-engine-option (expand-file-name "~/.pinot/daemon"))
+
 (defvar pinot:search-args
-  (unless pinot:search-wrapper '("--toxml" "-")))
+  (unless pinot:search-wrapper '("--toxml" "-"))
+  "Argument to give `pinot:search-executable'.
+
+For normal pinot-search::
+
+  (setq pinot:search-args '(\"--toxml\" \"-\"))
+
+Use pinot-search-wrapper.py::
+
+  (setq pinot:search-executable pinot:search-wrapper)
+  (setq pinot:search-args nil)
+
+Use pinot-search-wrapper.py with D-bus::
+
+  (setq pinot:search-executable pinot:search-wrapper)
+  (setq pinot:search-args '(\"--dbus\"))
+
+FIXME: simplify the setting.
+")
 
 (defun* pinot:search-command (query &key (buffer t))
   "Insert search result of QUERY in BUFFER (default: current buffer)."
