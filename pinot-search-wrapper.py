@@ -181,7 +181,9 @@ def dbus_reply_to_xml(hitslist):
                             (link, 'url')]:
             node.appendChild(doc.createTextNode(hit[key]))
 
-        description.appendChild(doc.createTextNode(strip_tags(hit['extract'])))
+        if 'extract' in hit:
+            text = strip_tags(hit['extract'])
+            description.appendChild(doc.createTextNode(text))
 
     return doc
 
