@@ -196,7 +196,8 @@ def pinot_dbus_search(args):
     (engine_type, engine_name, search_text) = args
     (estimated_hits, hitslist) = query_method(
         engine_type, engine_name, search_text,
-        dbus.UInt32(0), dbus.UInt32(10))
+        dbus.UInt32(0), dbus.UInt32(10),
+        timeout=1)
     dom = dbus_reply_to_xml(hitslist)
     ouput_dom(dom)
 
