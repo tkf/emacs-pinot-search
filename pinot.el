@@ -90,7 +90,11 @@ Use pinot-search-wrapper.py with D-bus::
   (setq pinot:search-executable pinot:search-wrapper)
   (setq pinot:search-args '(\"--dbus\"))
 
-FIXME: simplify the setting.
+To change timeout for D-bus interface, do something like this:
+
+  (setq pinot:search-args '(\"--dbus\" \"--dbus-timeout\" \"5\"))
+
+FIXME: simplify the setting interface.
 ")
 
 (defun* pinot:search-command (query &key (buffer t))
