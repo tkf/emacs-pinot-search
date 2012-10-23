@@ -110,7 +110,7 @@ FIXME: simplify the setting.
           (with-current-buffer (get-buffer-create "*pinot:stderr*")
             (erase-buffer)
             (insert-file-contents stderr)
-            (pop-to-buffer (current-buffer))))
+            (display-buffer (current-buffer))))
         (error "%s failed with code %s" cmd exit-status)))))
 
 (defun pinot:search-get-xml (query)
