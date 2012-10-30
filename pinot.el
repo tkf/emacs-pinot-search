@@ -30,8 +30,8 @@
 
 (eval-when-compile (defvar anything-c-source-find-files)
                    (defvar helm-c-source-find-files))
-(declare-function anything-other-buffer "anything")
-(declare-function helm-other-buffer "helm")
+(declare-function anything "anything")
+(declare-function helm "helm")
 
 
 (defgroup pinot nil
@@ -96,6 +96,10 @@ To change timeout for D-bus interface, do something like this:
 
 FIXME: simplify the setting interface.
 ")
+
+(defcustom pinot:default-input ""
+  "Default initial input for helm/anything search."
+  :group 'pinot)
 
 (defun* pinot:search-command (query &key (buffer t))
   "Insert search result of QUERY in BUFFER (default: current buffer)."
@@ -175,10 +179,12 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
 (defun anything-pinot-search ()
   (interactive)
   (require 'anything-config nil t) ; to load `anything-c-source-find-files'.
-  (anything-other-buffer (pinot:search-make-source
-                          'anything-pattern
-                          (cdr (assoc 'action anything-c-source-find-files)))
-                         "*anything pinot-search*"))
+  (anything
+   :sources (pinot:search-make-source
+             'anything-pattern
+             (cdr (assoc 'action anything-c-source-find-files)))
+   :buffer "*anything pinot-search*"
+   :input pinot:default-input))
 
 
 ;; Helm
@@ -187,10 +193,12 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
 (defun helm-pinot-search ()
   (interactive)
   (require 'helm-files nil t)     ; to load `helm-c-source-find-files'
-  (helm-other-buffer (pinot:search-make-source
-                      'helm-pattern
-                      (cdr (assoc 'action helm-c-source-find-files)))
-                     "*helm pinot-search*"))
+  (helm
+   :sources (pinot:search-make-source
+             'helm-pattern
+             (cdr (assoc 'action helm-c-source-find-files)))
+   :buffer "*helm pinot-search*"
+   :input pinot:default-input))
 
 (provide 'pinot)
 
