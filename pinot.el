@@ -152,6 +152,9 @@ FIXME: simplify the setting interface.
 
 (defun pinot:search-make-source (query-sym action)
   `((name . "Pinot search")
+    (header-name . (lambda (x) (format "%s
+Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
+                                      x)))
     (candidates
      . (lambda () (pinot:search-get-candidates ,query-sym)))
     (requires-pattern . 2)     ; it seems xapian fails with one letter
