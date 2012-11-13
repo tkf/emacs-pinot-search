@@ -60,11 +60,6 @@
       default-directory)
   "Directory where pinot.el and pinot-search-wrapper.py locate.")
 
-(defvar pinot:stderr-file nil
-  "File to save STDERR output from pinot-search command.
-If `nil', STDERR will be discarded.  When it is specified, this
-file pops up opened when pinot-search failed.")
-
 (defvar pinot:search-wrapper
   (concat pinot:source-directory "pinot-search-wrapper.py")
   "Path to pinot-search-wrapper.py.")
@@ -119,6 +114,12 @@ Choose the one from the methods registered in
 (defvar pinot:last-query nil)
 (defvar pinot:process nil)
 
+(define-obsolete-variable-alias 'pinot:stderr-file 'pinot:display-stderr)
+(defcustom pinot:display-stderr nil
+  "Show stderr when pinot-search command failed.
+This is for debugging."
+  :group 'pinot)
+
 (defun pinot:search-sentinel (process event)
   (cond
    ((equal event "finished\n")
@@ -128,6 +129,8 @@ Choose the one from the methods registered in
              (libxml-parse-xml-region (point-min) (point-max)))))
     (pinot:helm-update))
    (t
+    (when pinot:display-stderr
+      (display-buffer (process-buffer process)))
     (message "Error in pinot-search: %S" event))))
 
 (defun pinot:search-command (query)
@@ -138,8 +141,7 @@ Choose the one from the methods registered in
     (setq pinot:reply-candidates nil)
     (when (and pinot:process (process-live-p pinot:process))
       (kill-process pinot:process))
-    (let* ((stderr pinot:stderr-file)
-           (method (assoc-default pinot:search-method
+    (let* ((method (assoc-default pinot:search-method
                                   pinot:search-method-alist))
            (program (car method))
            (args (append (cdr method)
