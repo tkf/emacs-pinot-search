@@ -91,7 +91,8 @@ Please use `pinot:search-method-alist'."
    (t 'wrapper))
   "Pinot search command to use.
 Choose the one from the methods registered in
-`pinot:search-method-alist'."
+`pinot:search-method-alist'.  You can choose method interactively
+from `helm-pinot-choose-method' or `anything-pinot-choose-method'."
   :group 'pinot)
 
 (defcustom pinot:default-input ""
@@ -230,6 +231,7 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
    :input pinot:default-input))
 
 (defun anything-pinot-choose-method ()
+  "Set `pinot:search-method' interactively."
   (interactive)
   (anything :sources pinot:choose-method-source
             :buffer "*anything pinot-choose-methods*"))
@@ -249,6 +251,7 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
    :input pinot:default-input))
 
 (defun helm-pinot-choose-method ()
+  "Set `pinot:search-method' interactively."
   (interactive)
   (helm :sources pinot:choose-method-source
         :buffer "*helm pinot-choose-methods*"))
