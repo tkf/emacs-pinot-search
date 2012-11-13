@@ -3,6 +3,7 @@
 ;; Copyright (C) 2012 Takafumi Arakaki
 
 ;; Author: Takafumi Arakaki <aka.tkf at gmail.com>
+;; Version: 0.1
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -39,6 +40,8 @@
   :group 'applications
   :prefix "pinot:")
 
+(defconst pinot:version "0.1")
+
 (defface pinot:search-item-title
   '((t :height 1.1 :inherit (variable-pitch bold)))
   "Face for matched document title."
@@ -69,6 +72,12 @@ file pops up opened when pinot-search failed.")
 (defvar pinot:search-executable "pinot-search")
 (defvar pinot:search-engine-type "xapian")
 (defvar pinot:search-engine-option (expand-file-name "~/.pinot/daemon"))
+
+(make-obsolete-variable
+ 'pinot:search-args
+ "Sorry, `pinot:search-args' is not supported anymore. \
+Please use `pinot:search-method-alist'."
+ "0.1")
 
 (defcustom pinot:search-method-alist
   `((nil     . (,pinot:search-executable "--toxml" "-"))
