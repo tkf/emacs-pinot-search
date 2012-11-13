@@ -117,6 +117,7 @@ Choose the one from the methods registered in
 
 (defvar pinot:reply-candidates nil)
 (defvar pinot:last-query nil)
+(defvar pinot:process nil)
 
 (defun pinot:search-sentinel (process event)
   (cond
@@ -135,6 +136,8 @@ Choose the one from the methods registered in
       pinot:reply-candidates
     (setq pinot:last-query query)
     (setq pinot:reply-candidates nil)
+    (when (and pinot:process (process-live-p pinot:process))
+      (kill-process pinot:process))
     (let* ((stderr pinot:stderr-file)
            (method (assoc-default pinot:search-method
                                   pinot:search-method-alist))
@@ -150,6 +153,7 @@ Choose the one from the methods registered in
                 (erase-buffer))
               (apply #'start-process "pinot:search" buffer
                      program args))))
+      (setq pinot:process process)
       (set-process-sentinel process #'pinot:search-sentinel)
       pinot:reply-candidates)))
 
