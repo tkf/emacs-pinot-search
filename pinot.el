@@ -30,9 +30,12 @@
 (require 'xml)
 
 (eval-when-compile (defvar anything-c-source-find-files)
-                   (defvar helm-c-source-find-files))
+                   (defvar helm-c-source-find-files)
+                   (defvar helm-alive-p))
 (declare-function anything "anything")
+(declare-function anything-window "anything")
 (declare-function helm "helm")
+(declare-function helm-update "helm")
 
 
 (defgroup pinot nil
@@ -100,34 +103,55 @@ Choose the one from the methods registered in
   "Default initial input for helm/anything search."
   :group 'pinot)
 
-(defun* pinot:search-command (query &key (buffer t))
-  "Insert search result of QUERY in BUFFER (default: current buffer)."
-  (let* ((stderr pinot:stderr-file)
-         (method (assoc-default pinot:search-method
-                                pinot:search-method-alist))
-         (program (car method))
-         (args (append (cdr method)
-                       (list pinot:search-engine-type
-                             pinot:search-engine-option
-                             query)))
-         (exit-status
-          (apply #'call-process
-                 program nil (list buffer stderr) nil args)))
-    ;; Treat error case:
-    (unless (equal exit-status 0)
-      (let ((cmd (apply #'concat program " " args)))
-        (when stderr
-          (with-current-buffer (get-buffer-create "*pinot:stderr*")
-            (erase-buffer)
-            (insert-file-contents stderr)
-            (display-buffer (current-buffer))))
-        (error "%s failed with code %s" cmd exit-status)))))
+(defcustom pinot:helm (if (featurep 'helm) 'helm 'anything)
+  "Set this to `anything' to use `anything' instead of `helm'."
+  :group 'pinot)
 
-(defun pinot:search-get-xml (query)
-  (with-temp-buffer
-    (erase-buffer)
-    (pinot:search-command query)
-    (libxml-parse-xml-region (point-min) (point-max))))
+(defun pinot:helm-update ()
+  (let ((update (intern (format "%s-update" pinot:helm)))
+        (alive-p (if (eq pinot:helm 'helm)
+                     helm-alive-p
+                   (anything-window))))
+    (when alive-p
+      (funcall update))))
+
+(defvar pinot:reply-candidates nil)
+(defvar pinot:last-query nil)
+
+(defun pinot:search-sentinel (process event)
+  (cond
+   ((equal event "finished\n")
+    (setq pinot:reply-candidates
+          (with-current-buffer (process-buffer process)
+            (pinot:search-get-candidates
+             (libxml-parse-xml-region (point-min) (point-max)))))
+    (pinot:helm-update))
+   (t
+    (message "Error in pinot-search: %S" event))))
+
+(defun pinot:search-command (query)
+  "Call search command with QUERY."
+  (if (equal pinot:last-query query)
+      pinot:reply-candidates
+    (setq pinot:last-query query)
+    (setq pinot:reply-candidates nil)
+    (let* ((stderr pinot:stderr-file)
+           (method (assoc-default pinot:search-method
+                                  pinot:search-method-alist))
+           (program (car method))
+           (args (append (cdr method)
+                         (list pinot:search-engine-type
+                               pinot:search-engine-option
+                               query)))
+           (buffer (get-buffer-create " *pinot:search*"))
+           (process
+            (progn
+              (with-current-buffer buffer
+                (erase-buffer))
+              (apply #'start-process "pinot:search" buffer
+                     program args))))
+      (set-process-sentinel process #'pinot:search-sentinel)
+      pinot:reply-candidates)))
 
 (defun pinot:xml-node-value (node name)
   (first (xml-node-children (first (xml-get-children node name)))))
@@ -143,8 +167,8 @@ Choose the one from the methods registered in
    " [" (propertize link 'face 'pinot:search-item-link) "] "
    ": " description))
 
-(defun pinot:search-get-candidates (query)
-  (loop with root = (pinot:search-get-xml query)
+(defun pinot:search-get-candidates (xml)
+  (loop with root = xml
         with items = (xml-get-children (first (xml-node-children root)) 'item)
         for doc in items
         for description = (pinot:xml-node-value doc 'description)
@@ -162,7 +186,7 @@ Choose the one from the methods registered in
 Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
                                       x)))
     (candidates
-     . (lambda () (pinot:search-get-candidates ,query-sym)))
+     . (lambda () (pinot:search-command ,query-sym)))
     (requires-pattern . 2)     ; it seems xapian fails with one letter
     ;; Pattern match is not required since pinot already did the job:
     (match . (pinot:return-t))
