@@ -203,6 +203,17 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
     (action . ,action)
     (delayed)))
 
+(defvar pinot:choose-method-source
+  '((name . "Pinot methods")
+    (header-name . (lambda (name) (format "%s [current: %s]"
+                                          name pinot:search-method)))
+    (candidates
+     . (lambda ()
+         (loop for (method . args) in pinot:search-method-alist
+               collect (cons (format "%s %s" method args) method))))
+    (action
+     . (lambda (x) (setq pinot:search-method x)))))
+
 
 
 ;; Anything
@@ -218,6 +229,11 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
    :buffer "*anything pinot-search*"
    :input pinot:default-input))
 
+(defun anything-pinot-choose-method ()
+  (interactive)
+  (anything :sources pinot:choose-method-source
+            :buffer "*anything pinot-choose-methods*"))
+
 
 ;; Helm
 
@@ -231,6 +247,11 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
              (cdr (assoc 'action helm-c-source-find-files)))
    :buffer "*helm pinot-search*"
    :input pinot:default-input))
+
+(defun helm-pinot-choose-method ()
+  (interactive)
+  (helm :sources pinot:choose-method-source
+        :buffer "*helm pinot-choose-methods*"))
 
 (provide 'pinot)
 
