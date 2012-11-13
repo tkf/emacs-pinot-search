@@ -141,6 +141,7 @@ This is for debugging."
     (setq pinot:last-query query)
     (setq pinot:reply-candidates nil)
     (when (and pinot:process (process-live-p pinot:process))
+      (set-process-sentinel pinot:process nil)
       (kill-process pinot:process))
     (let* ((method (assoc-default pinot:search-method
                                   pinot:search-method-alist))
