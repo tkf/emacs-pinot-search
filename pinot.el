@@ -60,42 +60,32 @@ If `nil', STDERR will be discarded.  When it is specified, this
 file pops up opened when pinot-search failed.")
 
 (defvar pinot:search-wrapper
-  (and (executable-find "python")
-       (concat pinot:source-directory "pinot-search-wrapper.py"))
+  (concat pinot:source-directory "pinot-search-wrapper.py")
   "Path to pinot-search-wrapper.py.")
 
 (defvar pinot:normalize-path 'identity
   "A function to convert path.  Useful when you have symlinks.")
 
-(defvar pinot:search-executable
-  (or pinot:search-wrapper "pinot-search"))
+(defvar pinot:search-executable "pinot-search")
 (defvar pinot:search-engine-type "xapian")
 (defvar pinot:search-engine-option (expand-file-name "~/.pinot/daemon"))
 
-(defvar pinot:search-args
-  (unless pinot:search-wrapper '("--toxml" "-"))
-  "Argument to give `pinot:search-executable'.
+(defcustom pinot:search-method-alist
+  `((nil     . (,pinot:search-executable "--toxml" "-"))
+    (wrapper . (,pinot:search-wrapper))
+    (dbus    . (,pinot:search-wrapper "--dbus")))
+  "Method name to \"pinot-search\" command map."
+  :group 'pinot)
 
-For normal pinot-search::
-
-  (setq pinot:search-args '(\"--toxml\" \"-\"))
-
-Use pinot-search-wrapper.py::
-
-  (setq pinot:search-executable pinot:search-wrapper)
-  (setq pinot:search-args nil)
-
-Use pinot-search-wrapper.py with D-bus::
-
-  (setq pinot:search-executable pinot:search-wrapper)
-  (setq pinot:search-args '(\"--dbus\"))
-
-To change timeout for D-bus interface, do something like this:
-
-  (setq pinot:search-args '(\"--dbus\" \"--dbus-timeout\" \"5\"))
-
-FIXME: simplify the setting interface.
-")
+(defcustom pinot:search-method
+  (cond
+   ((not (executable-find "python")) nil)
+   ((= (call-process "python" nil nil nil "-c" "import dbus") 0) 'dbus)
+   (t 'wrapper))
+  "Pinot search command to use.
+Choose the one from the methods registered in
+`pinot:search-method-alist'."
+  :group 'pinot)
 
 (defcustom pinot:default-input ""
   "Default initial input for helm/anything search."
@@ -104,16 +94,19 @@ FIXME: simplify the setting interface.
 (defun* pinot:search-command (query &key (buffer t))
   "Insert search result of QUERY in BUFFER (default: current buffer)."
   (let* ((stderr pinot:stderr-file)
-         (args (append pinot:search-args
+         (method (assoc-default pinot:search-method
+                                pinot:search-method-alist))
+         (program (car method))
+         (args (append (cdr method)
                        (list pinot:search-engine-type
                              pinot:search-engine-option
                              query)))
          (exit-status
           (apply #'call-process
-                 pinot:search-executable nil (list buffer stderr) nil args)))
+                 program nil (list buffer stderr) nil args)))
     ;; Treat error case:
     (unless (equal exit-status 0)
-      (let ((cmd (apply #'concat pinot:search-executable " " args)))
+      (let ((cmd (apply #'concat program " " args)))
         (when stderr
           (with-current-buffer (get-buffer-create "*pinot:stderr*")
             (erase-buffer)
