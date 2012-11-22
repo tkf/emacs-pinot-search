@@ -132,7 +132,8 @@ This is for debugging."
    (t
     (when pinot:display-stderr
       (display-buffer (process-buffer process)))
-    (message "Error in pinot-search: %S" event))))
+    ;; -1 for skipping \n:
+    (message "Error in pinot-search: %S" (substring event 0 -1)))))
 
 (defun pinot:search-command (query)
   "Call search command with QUERY."
