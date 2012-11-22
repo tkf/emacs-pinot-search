@@ -32,6 +32,7 @@ import os
 import re
 from itertools import imap, ifilter, izip, tee
 from xml.dom import minidom
+import xml.parsers.expat
 import subprocess
 import codecs
 
@@ -151,7 +152,10 @@ def pinot_search(args):
     proc = subprocess.Popen(
         ['pinot-search', '--toxml', '-'] + args,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    dom = minidom.parse(codecs.getreader('UTF-8')(proc.stdout))
+    try:
+        dom = minidom.parse(codecs.getreader('UTF-8')(proc.stdout))
+    except xml.parsers.expat.ExpatError:
+        dom = minidom.Document()
     ouput_dom(dom)
 
 
