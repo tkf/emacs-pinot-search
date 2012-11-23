@@ -232,6 +232,7 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
    :buffer "*anything pinot-search*"
    :input pinot:default-input))
 
+;;;###autoload
 (defun anything-pinot-choose-method ()
   "Set `pinot:search-method' interactively."
   (interactive)
@@ -252,6 +253,7 @@ Filters: site/file/ext/title/url/dir/inurl/lang/type/class/label"
    :buffer "*helm pinot-search*"
    :input pinot:default-input))
 
+;;;###autoload
 (defun helm-pinot-choose-method ()
   "Set `pinot:search-method' interactively."
   (interactive)
