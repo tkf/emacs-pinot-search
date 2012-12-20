@@ -192,15 +192,17 @@ def dbus_reply_to_xml(hitslist):
     return doc
 
 
-def pinot_dbus_search(args, timeout):
+def pinot_dbus_search(args, timeout, max_hits):
     import dbus
     bus = dbus.SessionBus()
     session = bus.get_object('de.berlios.Pinot', '/de/berlios/Pinot')
     query_method = session.get_dbus_method('Query')
+    start_doc = dbus.UInt32(0)
+    max_hits = dbus.UInt32(max_hits)
     (engine_type, engine_name, search_text) = args
     (estimated_hits, hitslist) = query_method(
         engine_type, engine_name, search_text,
-        dbus.UInt32(0), dbus.UInt32(10),
+        start_doc, max_hits,
         timeout=timeout)
     dom = dbus_reply_to_xml(hitslist)
     ouput_dom(dom)
@@ -215,13 +217,16 @@ def main(args=None):
         '--dbus-timeout', default=2, type=int,
         help='Timeout used when calling pinot via D-Bus')
     parser.add_argument(
+        '-m', '--max', dest='max_hits', default=10, type=int,
+        help='maximum number of results')
+    parser.add_argument(
         'pinot_args', nargs='+',
         help='Arguments passed to pinot-search.')
     ns = parser.parse_args(args)
     if ns.dbus:
-        pinot_dbus_search(ns.pinot_args, ns.dbus_timeout)
+        pinot_dbus_search(ns.pinot_args, ns.dbus_timeout, ns.max_hits)
     else:
-        pinot_search(ns.pinot_args)
+        pinot_search(['--max', ns.max_hits] + ns.pinot_args)
 
 
 if __name__ == '__main__':

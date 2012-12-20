@@ -84,6 +84,18 @@ Please use `pinot:search-method-alist'."
   "Method name to \"pinot-search\" command map."
   :group 'pinot)
 
+(defcustom pinot:search-extra-args nil
+  "Extra arguments to be passed to pinot command.
+
+Example::
+
+  ;; Increase number of results (default: 10)
+  (setq pinot:search-extra-args '(\"--max\" \"50\"))
+
+If you want to change method-specific argument, edit
+`pinot:search-method-alist'."
+  :group 'pinot)
+
 (defcustom pinot:search-method
   (cond
    ((not (executable-find "python")) nil)
@@ -148,6 +160,7 @@ This is for debugging."
                                   pinot:search-method-alist))
            (program (car method))
            (args (append (cdr method)
+                         pinot:search-extra-args
                          (list pinot:search-engine-type
                                pinot:search-engine-option
                                query)))
