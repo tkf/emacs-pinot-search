@@ -30,11 +30,26 @@ Supported markups: reStructuredText, Markdown, org-mode.
 import sys
 import os
 import re
-from itertools import imap, ifilter, izip, tee
+from itertools import tee
+try:
+    from itertools import imap as map, ifilter as filter, izip as zip
+except ImportError:
+    pass
 from xml.dom import minidom
 import xml.parsers.expat
 import subprocess
 import codecs
+
+try:
+    unicode
+except NameError:
+    unicode = str
+
+
+def mapdo(f, *sequences):
+    """map for side effect"""
+    for args in zip(*sequences):
+        f(*args)
 
 
 def gene_iparse_underline_headings(symbols):
@@ -42,7 +57,7 @@ def gene_iparse_underline_headings(symbols):
 
     def iparse_underline_headings(lines):
         lines = iter(lines)
-        previous = lines.next()
+        previous = next(lines)
         yield
         for line in lines:
             if underline_re.match(line.rstrip()):
@@ -81,29 +96,25 @@ def first(iterative):
 
 
 def get_first_heading(lines, parsers):
-    lines = imap(str.rstrip, lines)
+    lines = map(str.rstrip, lines)
     iteratives = map(lambda p, ls: p(ls), parsers, tee(lines, len(parsers)))
-    candidates = first(ifilter(any, izip(*iteratives)))
+    candidates = first(filter(any, zip(*iteratives)))
     if candidates:
-        return first(ifilter(None, candidates))  # get non-None candidate
+        return first(filter(None, candidates))  # get non-None candidate
 
 
-def get_title_rst(path):
+def get_title_rst(lines):
+    return get_first_heading(lines, [iparse_rst_underline_headings])
+
+
+def get_title_md(lines):
     return get_first_heading(
-        open(path).xreadlines(),
-        [iparse_rst_underline_headings])
-
-
-def get_title_md(path):
-    return get_first_heading(
-        open(path).xreadlines(),
+        lines,
         [iparse_md_underline_headings, iparse_sharps_headings])
 
 
-def get_title_org(path):
-    return get_first_heading(
-        open(path).xreadlines(),
-        [iparse_asterisk_headings])
+def get_title_org(lines):
+    return get_first_heading(lines, [iparse_asterisk_headings])
 
 
 exts_func = [
@@ -122,7 +133,7 @@ def get_title(path):
     ext = os.path.splitext(path)[1].lower()[1:]
     func = dispatcher.get(ext)
     if func:
-        return func(path)
+        return func(iter(open(path).readline, ''))
 
 
 def fix_title(dom):
@@ -139,13 +150,19 @@ def fix_title(dom):
             path = path[len('file://'):]
             real_title = get_title(path)
             if real_title:
-                title.firstChild.nodeValue = unicode(
-                    real_title, encoding='UTF-8')
+                if isinstance(real_title, unicode):
+                    title.firstChild.nodeValue = real_title
+                else:
+                    title.firstChild.nodeValue = unicode(
+                        real_title, encoding='UTF-8')
 
 
 def ouput_dom(dom):
     fix_title(dom)
-    dom.writexml(codecs.getwriter('UTF-8')(sys.stdout))
+    if unicode is str:
+        dom.writexml(sys.stdout)
+    else:
+        dom.writexml(codecs.getwriter('UTF-8')(sys.stdout))
 
 
 def pinot_search(args):
@@ -179,7 +196,7 @@ def dbus_reply_to_xml(hitslist):
         title = doc.createElement('title')
         link = doc.createElement('link')
         description = doc.createElement('description')
-        map(item.appendChild, [title, link, description])
+        mapdo(item.appendChild, [title, link, description])
 
         for (node, key) in [(title, 'caption'),
                             (link, 'url')]:
