@@ -226,7 +226,7 @@ def main(args=None):
     if ns.dbus:
         pinot_dbus_search(ns.pinot_args, ns.dbus_timeout, ns.max_hits)
     else:
-        pinot_search(['--max', ns.max_hits] + ns.pinot_args)
+        pinot_search(['--max', str(ns.max_hits)] + ns.pinot_args)
 
 
 if __name__ == '__main__':
