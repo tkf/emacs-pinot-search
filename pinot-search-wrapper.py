@@ -137,6 +137,8 @@ def fix_title(dom):
             if not path.startswith('file://'):
                 continue
             path = path[len('file://'):]
+            if not os.path.exists(path):
+                continue
             real_title = get_title(path)
             if real_title:
                 title.firstChild.nodeValue = unicode(
