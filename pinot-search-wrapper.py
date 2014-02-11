@@ -155,7 +155,7 @@ def pinot_search(args):
         ['pinot-search', '--toxml', '-'] + args,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        dom = minidom.parse(codecs.getreader('UTF-8')(proc.stdout))
+        dom = minidom.parse(proc.stdout)
     except xml.parsers.expat.ExpatError:
         dom = minidom.Document()
     ouput_dom(dom)
